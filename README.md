@@ -1755,7 +1755,7 @@ package com.atguigu.ssyx.acl.controller;
 import com.atguigu.ssyx.acl.service.AdminService;
 import com.atguigu.ssyx.acl.service.RoleService;
 import com.atguigu.ssyx.common.result.Result;
-import com.atguigu.ssyx.common.utils.MD5;
+import com.atguigu.ssyx.common.util.MD5;
 import com.atguigu.ssyx.model.acl.Admin;
 import com.atguigu.ssyx.vo.acl.AdminQueryVo;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -1765,6 +1765,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 /**
@@ -7510,15 +7511,16 @@ base64编码，并不是加密，只是把明文信息变成了不可见的字�
 **（4）在common-util添加JWT工具类**
 
 ```java
-package com.atguigu.ssyx.common.utils.helper;
+package com.atguigu.ssyx.common.util.helper;
 
 import io.jsonwebtoken.*;
 import org.springframework.util.StringUtils;
+
 import java.util.Date;
 
 public class JwtHelper {
 
-    private static long tokenExpiration = 365*24*60*60*1000;
+    private static long tokenExpiration = 365 * 24 * 60 * 60 * 1000;
     private static String tokenSignKey = "ssyx";
 
     public static String createToken(Long userId, String userName) {
@@ -7534,21 +7536,21 @@ public class JwtHelper {
     }
 
     public static Long getUserId(String token) {
-        if(StringUtils.isEmpty(token)) return null;
+        if (StringUtils.isEmpty(token)) return null;
 
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(tokenSignKey).parseClaimsJws(token);
         Claims claims = claimsJws.getBody();
-        Integer userId = (Integer)claims.get("userId");
+        Integer userId = (Integer) claims.get("userId");
         return userId.longValue();
         // return 1L;
     }
 
     public static String getUserName(String token) {
-        if(StringUtils.isEmpty(token)) return "";
+        if (StringUtils.isEmpty(token)) return "";
 
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(tokenSignKey).parseClaimsJws(token);
         Claims claims = claimsJws.getBody();
-        return (String)claims.get("userName");
+        return (String) claims.get("userName");
     }
 
     public static void removeToken(String token) {
@@ -8114,7 +8116,7 @@ import com.atguigu.ssyx.common.constant.RedisConst;
 import com.atguigu.ssyx.common.exception.SsyxException;
 import com.atguigu.ssyx.common.result.Result;
 import com.atguigu.ssyx.common.result.ResultCodeEnum;
-import com.atguigu.ssyx.common.utils.helper.JwtHelper;
+import com.atguigu.ssyx.common.util.helper.JwtHelper;
 import com.atguigu.ssyx.enums.UserType;
 import com.atguigu.ssyx.model.user.User;
 import com.atguigu.ssyx.user.service.UserService;
@@ -8127,6 +8129,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -8145,7 +8148,7 @@ public class WeixinApiController {
     @GetMapping("/wxLogin/{code}")
     public Result callback(@PathVariable String code) {
         //获取授权临时票据
-        System.out.println("微信授权服务器回调。。。。。。"+code);
+        System.out.println("微信授权服务器回调。。。。。。" + code);
         if (StringUtils.isEmpty(code)) {
             throw new SsyxException(ResultCodeEnum.ILLEGAL_CALLBACK_REQUEST_ERROR);
         }
@@ -8172,7 +8175,7 @@ public class WeixinApiController {
 
         System.out.println("使用code换取的access_token结果 = " + result);
         JSONObject resultJson = JSONObject.parseObject(result);
-        if(resultJson.getString("errcode") != null){
+        if (resultJson.getString("errcode") != null) {
             throw new SsyxException(ResultCodeEnum.FETCH_ACCESSTOKEN_FAILD);
         }
 
@@ -8187,7 +8190,7 @@ public class WeixinApiController {
         //先根据openid进行数据库查询
         User user = userService.getByOpenid(openId);
         // 如果没有查到用户信息,那么调用微信个人信息获取的接口
-        if(null == user){
+        if (null == user) {
             user = new User();
             user.setOpenId(openId);
             user.setNickName(openId);
@@ -8475,7 +8478,7 @@ public class AuthContextHolder {
 package com.atguigu.ssyx.common.security;
 
 import com.atguigu.ssyx.common.constant.RedisConst;
-import com.atguigu.ssyx.common.utils.JwtHelper;
+import com.atguigu.ssyx.common.util.JwtHelper;
 import com.atguigu.ssyx.vo.user.UserLoginVo;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
@@ -8498,14 +8501,14 @@ public class UserLoginInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private void initUserLoginVo(HttpServletRequest request){
+    private void initUserLoginVo(HttpServletRequest request) {
         //从请求头获取token
         String token = request.getHeader("token");
         System.out.println(token);
         if (!StringUtils.isEmpty(token)) {
             Long userId = JwtHelper.getUserId(token);
-            UserLoginVo userLoginVo = (UserLoginVo)redisTemplate.opsForValue().get(RedisConst.USER_LOGIN_KEY_PREFIX + userId);
-            if(userLoginVo != null) {
+            UserLoginVo userLoginVo = (UserLoginVo) redisTemplate.opsForValue().get(RedisConst.USER_LOGIN_KEY_PREFIX + userId);
+            if (userLoginVo != null) {
                 //将UserInfo放入上下文中
                 AuthContextHolder.setUserId(userLoginVo.getUserId());
                 AuthContextHolder.setWareId(userLoginVo.getWareId());
